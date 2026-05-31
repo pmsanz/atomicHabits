@@ -1,0 +1,47 @@
+# ─── Stage 1: builder ─────────────────────────────────────────────────────────
+# Full monorepo build — used by the api runner AND by the migrate service
+# in docker-compose (target: builder).
+FROM node:24-slim AS builder
+
+# Install pnpm (pinned to match the Replit environment)
+RUN npm install -g pnpm@10.26.1 --ignore-scripts
+
+WORKDIR /app
+
+# Copy workspace manifests first so Docker can cache the install layer
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+
+# Copy tsconfig files needed by the monorepo build
+COPY tsconfig.json tsconfig.base.json ./
+
+# Copy shared libs and the api-server source
+COPY lib/ ./lib/
+COPY artifacts/api-server/ ./artifacts/api-server/
+
+# Install all dependencies (frozen — uses exact lockfile versions)
+RUN pnpm install --frozen-lockfile
+
+# Build composite libs (generates .d.ts declaration files)
+RUN pnpm run typecheck:libs
+
+# Bundle the API server with esbuild → artifacts/api-server/dist/
+RUN pnpm --filter @workspace/api-server run build
+
+
+# ─── Stage 2: runner ──────────────────────────────────────────────────────────
+# Lean production image — only the self-contained esbuild bundle is needed.
+# All npm dependencies (pg, express, drizzle-orm, etc.) are bundled into
+# dist/index.mjs by esbuild. The pino workers are also bundled by
+# esbuild-plugin-pino into dist/*.mjs, so no node_modules are required at runtime.
+FROM node:24-slim AS runner
+
+WORKDIR /app
+
+COPY --from=builder /app/artifacts/api-server/dist ./dist
+
+ENV NODE_ENV=production
+ENV PORT=8080
+
+EXPOSE 8080
+
+CMD ["node", "--enable-source-maps", "./dist/index.mjs"]

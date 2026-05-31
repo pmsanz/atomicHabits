@@ -1,0 +1,125 @@
+version: "3.9"
+
+# ─── Volumes ──────────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+  ollama_data:
+
+# ─── Networks ─────────────────────────────────────────────────────────────────
+networks:
+  app:
+    driver: bridge
+
+# ─── Services ─────────────────────────────────────────────────────────────────
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    networks: [app]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER:     atomic
+      POSTGRES_PASSWORD: atomic
+      POSTGRES_DB:       atomic_habits
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atomic -d atomic_habits"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Ollama (local LLM server) ────────────────────────────────────────────────
+  # GPU note: to enable NVIDIA GPU support uncomment the `deploy` block below
+  # and ensure the NVIDIA Container Toolkit is installed on the host.
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    networks: [app]
+    ports:
+      - "11434:11434"      # expose so you can run `ollama` commands from the host
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    # ── Uncomment for NVIDIA GPU ─────────────────────────────────────────────
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # ── Pull the default model on first boot ────────────────────────────────────
+  # This container exits after the model is pulled; re-running compose is safe
+  # because `ollama pull` is idempotent (skips if already present).
+  ollama-model:
+    image: ollama/ollama:latest
+    networks: [app]
+    entrypoint: ["ollama", "pull"]
+    command: ["${OLLAMA_MODEL:-llama3.2}"]
+    environment:
+      OLLAMA_HOST: "http://ollama:11434"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  # ── DB migrations ────────────────────────────────────────────────────────────
+  # Uses the builder stage of Dockerfile.api (full workspace with drizzle-kit).
+  # Exits with 0 on success; the api service depends on this completing first.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: builder
+    networks: [app]
+    command: ["pnpm", "--filter", "@workspace/db", "run", "push-force"]
+    environment:
+      DATABASE_URL: "postgresql://atomic:atomic@postgres:5432/atomic_habits"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # ── API server ───────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: runner
+    restart: unless-stopped
+    networks: [app]
+    environment:
+      PORT:             "8080"
+      NODE_ENV:         production
+      DATABASE_URL:     "postgresql://atomic:atomic@postgres:5432/atomic_habits"
+      SESSION_SECRET:   "${SESSION_SECRET:-change-me-in-production-use-a-long-random-string}"
+      OLLAMA_BASE_URL:  "http://ollama:11434"
+      OLLAMA_MODEL:     "${OLLAMA_MODEL:-llama3.2}"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    # The API port is NOT published to the host — access it via the nginx frontend.
+    # Uncomment the line below only for debugging:
+    # ports: ["8080:8080"]
+
+  # ── Frontend (nginx) ─────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: unless-stopped
+    networks: [app]
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - api
