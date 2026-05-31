@@ -44,7 +44,11 @@ export default function Stacks() {
   });
 
   const onSubmit = (data: z.infer<typeof stackSchema>) => {
-    createMutation.mutate({ data }, {
+    const payload = {
+      ...data,
+      anchorHabitId: data.anchorHabitId === -1 ? undefined : data.anchorHabitId,
+    };
+    createMutation.mutate({ data: payload }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListHabitStacksQueryKey() });
         setIsDialogOpen(false);
@@ -90,7 +94,7 @@ export default function Stacks() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None (custom anchor)</SelectItem>
+                        <SelectItem value="-1">None (custom anchor)</SelectItem>
                         {habits?.map(h => (
                           <SelectItem key={h.id} value={h.id.toString()}>{h.name}</SelectItem>
                         ))}
