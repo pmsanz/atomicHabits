@@ -1,0 +1,857 @@
+Listo. Usé tus respuestas para convertirlo en un **prompt maestro en inglés** para Replit. Incluí decisiones técnicas actuales: Ollama usa `/api/chat`, la imagen oficial de Docker es `ollama/ollama`, y Replit permite construir/publicar apps desde prompts y proyectos completos; por eso el prompt pide `Dockerfile`, `docker-compose.yml`, `.env.example`, README y soporte tanto para Ollama dentro del compose como para Ollama externo. ([Ollama][1])
+
+Puedes copiar y pegar esto directamente en Replit Agent:
+
+---
+
+```text
+You are a senior full-stack product engineer, UX designer, software architect, and technical lead. Build a visually polished, production-minded MVP web application called “Atomic Identity Habits”. The app must help users build habits using principles inspired by Atomic Habits: identity-based habits, habit stacking, tiny actions, environment design, daily tracking, reflection, never-miss-twice recovery, and sober progress visualization.
+
+The application must be a multi-user full-stack web app that can run locally in Docker, can be hosted on a local computer, and can also be developed or published on Replit. Prioritize a beautiful MVP that feels complete and coherent visually, rather than a bare technical prototype. The app must use a dark, elegant, GitHub-inspired visual style, with a contribution-graph habit heatmap similar in spirit to GitHub’s contribution calendar, combined with modern dashboard design patterns commonly seen in polished habit tracker UI inspiration, productivity dashboards, and Pinterest-style visual references. Do not copy Pinterest’s own website UI. Instead, use Pinterest-style inspiration as a broad visual reference: elegant cards, clear spacing, soft rounded panels, mood-board-like visual hierarchy, clean dashboard components, beautiful habit cards, subtle contrast, thoughtful empty states, and modern interaction patterns. The visual direction should be closer to a premium GitHub dark dashboard than a wellness app with bright colors.
+
+The entire app must be in English: UI labels, onboarding copy, database seed data, AI assistant behavior, README, comments, and documentation must all be written in English.
+
+Core technical stack:
+- Frontend: React + Vite + TypeScript.
+- Styling: Tailwind CSS.
+- Backend: Node.js + Express + TypeScript.
+- Database: PostgreSQL.
+- ORM: Prisma.
+- Authentication: multi-user auth with secure password hashing.
+- AI assistant: Ollama via HTTP API.
+- Default Ollama model: qwen:0.6b, but the model must be configurable using an environment variable.
+- Docker support: include Dockerfile and docker-compose.yml.
+- Replit support: include clear setup instructions for running in Replit.
+- CSV export support.
+- Basic automated tests.
+- Code quality: apply Clean Code principles and use appropriate Gang of Four design patterns where they genuinely improve clarity and maintainability.
+
+Important: build a complete working MVP. Do not leave placeholder buttons that do nothing unless clearly marked as future work. The app must be usable after setup.
+
+High-level product vision:
+The product is not just a habit checkbox tracker. It is a system for helping users become the kind of person they want to be. The main idea is:
+Identity → Systems → Habits → Daily Evidence → Reflection → Improvement.
+
+The user should be able to define identities such as:
+- “I am a consistent reader”
+- “I am a healthy person”
+- “I am a focused builder”
+- “I am a disciplined athlete”
+- “I am a thoughtful partner”
+- “I am a calm person”
+
+Then the user connects habits to those identities. Each completed habit becomes evidence for an identity. The dashboard should show not only “you completed 4 habits”, but also “today you reinforced the identity of a focused builder and healthy person.”
+
+The tone of the product must be sober, grounded, encouraging, and non-gimmicky. Avoid childish gamification, confetti overload, cartoonish badges, or excessive XP systems. Use elegant progress, streaks, identity evidence, consistency, and reflection as the reward system.
+
+Core MVP features to implement:
+1. Multi-user authentication.
+2. User dashboard.
+3. Daily habit tracking.
+4. Identity system.
+5. Habit stacking.
+6. GitHub-style heatmap calendar.
+7. Daily journal.
+8. AI coach powered by Ollama.
+9. AI memory system stored in PostgreSQL.
+10. Never Miss Twice recovery mode.
+11. Basic insights.
+12. CSV export.
+13. Responsive layout that works on desktop and mobile, but desktop does not need to be secondary. It does not need to be mobile-first.
+14. Basic tests.
+15. Dockerized setup with PostgreSQL and optional Ollama service.
+
+Application structure:
+Use a clean monorepo-like structure, but keep it simple enough for Replit and Docker.
+
+Suggested structure:
+- /client
+  - React + Vite + TypeScript frontend
+  - Tailwind CSS
+  - Components, pages, hooks, services
+- /server
+  - Express + TypeScript backend
+  - Prisma
+  - Auth
+  - API routes
+  - Ollama service integration
+  - CSV export
+  - Tests
+- /prisma
+  - schema.prisma
+  - migrations if applicable
+  - seed script
+- docker-compose.yml
+- Dockerfile
+- README.md
+- .env.example
+- package.json or workspace package configuration
+
+If a simpler single-package structure is more reliable in Replit, you may choose it, but keep frontend and backend concerns clearly separated.
+
+Docker and environment requirements:
+Create a Dockerfile that can build and run the full-stack app. Create a docker-compose.yml that includes:
+- app service
+- postgres service
+- ollama service using the official Ollama image
+
+The app must support two Ollama modes:
+Mode A: Ollama inside Docker Compose.
+- OLLAMA_BASE_URL=http://ollama:11434
+- The compose file includes an ollama service.
+- The Ollama model should be pulled manually by the user or via an optional script.
+
+Mode B: Ollama running externally on the host machine.
+- OLLAMA_BASE_URL can be set to http://host.docker.internal:11434 when appropriate.
+- The README must explain how to switch between modes.
+- The app must fail gracefully if Ollama is unavailable, showing a helpful UI message rather than crashing.
+
+Environment variables:
+Create .env.example with at least:
+DATABASE_URL=postgresql://postgres:postgres@postgres:5432/atomic_habits
+JWT_SECRET=replace_me_with_a_long_random_secret
+PORT=3000
+NODE_ENV=development
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=qwen:0.6b
+
+If the actual Ollama model tag needs adjustment for compatibility, make the model name fully configurable through OLLAMA_MODEL and document it clearly.
+
+Backend requirements:
+Use Express with TypeScript.
+Use Prisma for database access.
+Use PostgreSQL.
+Use JWT-based authentication with secure password hashing using bcrypt or argon2.
+Add validation for inputs. Prefer Zod if appropriate.
+Use clear layered architecture:
+- routes/controllers for HTTP concerns
+- services for business logic
+- repositories or data access layer for Prisma operations
+- DTOs or schemas for validation
+- middleware for auth and errors
+
+Use Clean Code principles:
+- meaningful names
+- small functions
+- single responsibility
+- avoid duplicated logic
+- explicit error handling
+- clear boundaries between UI, API, DB, and AI logic
+
+Use Gang of Four patterns where useful, but do not over-engineer. Good candidates:
+- Strategy pattern for different habit tracking types: boolean, quantity, duration.
+- Repository pattern for database access.
+- Factory pattern for creating AI tools or memory query handlers.
+- Command pattern for user-confirmed AI actions such as “create habit”, “edit habit”, or “add memory”.
+- Adapter pattern for Ollama API integration so the rest of the app is not tightly coupled to Ollama.
+- Observer-like event logging or domain events for habit completion and identity evidence updates, if simple enough.
+
+API requirements:
+Implement REST endpoints.
+
+Auth:
+POST /api/auth/register
+POST /api/auth/login
+GET /api/auth/me
+
+Identities:
+GET /api/identities
+POST /api/identities
+PATCH /api/identities/:id
+DELETE /api/identities/:id
+
+Habits:
+GET /api/habits
+POST /api/habits
+GET /api/habits/:id
+PATCH /api/habits/:id
+DELETE /api/habits/:id
+
+Habit completions:
+GET /api/habit-logs?from=YYYY-MM-DD&to=YYYY-MM-DD
+POST /api/habit-logs
+PATCH /api/habit-logs/:id
+DELETE /api/habit-logs/:id
+
+Dashboard:
+GET /api/dashboard/today
+GET /api/dashboard/heatmap?year=YYYY
+GET /api/dashboard/insights
+
+Habit stacking:
+GET /api/habit-stacks
+POST /api/habit-stacks
+PATCH /api/habit-stacks/:id
+DELETE /api/habit-stacks/:id
+
+Journal:
+GET /api/journal?date=YYYY-MM-DD
+POST /api/journal
+PATCH /api/journal/:id
+GET /api/journal/search?q=...
+
+AI:
+POST /api/ai/chat
+POST /api/ai/confirm-action
+GET /api/ai/memories
+POST /api/ai/memories
+
+Export:
+GET /api/export/habits.csv
+GET /api/export/journal.csv
+GET /api/export/all.csv
+
+The exact endpoint names may vary slightly, but implement all capabilities.
+
+Database model requirements:
+Create Prisma models for:
+User:
+- id
+- email
+- passwordHash
+- name
+- createdAt
+- updatedAt
+
+Identity:
+- id
+- userId
+- name
+- description
+- colorKey or accent
+- createdAt
+- updatedAt
+
+Habit:
+- id
+- userId
+- identityId optional
+- name
+- description optional
+- type: BOOLEAN, QUANTITY, DURATION
+- frequency: DAILY, WEEKLY, CUSTOM
+- targetValue optional
+- targetUnit optional: pages, minutes, km, words, reps, glasses, etc.
+- minimumVersion: text, for the “tiny version” of the habit
+- idealVersion: text
+- cueType: TIME, LOCATION, EVENT, PERSON, NONE
+- cueDescription
+- rewardDescription
+- frictionNotes
+- environmentDesignNotes
+- isActive
+- createdAt
+- updatedAt
+
+HabitLog:
+- id
+- userId
+- habitId
+- date
+- value
+- completed
+- note
+- createdAt
+- updatedAt
+Ensure uniqueness by userId + habitId + date where appropriate.
+
+HabitStack:
+- id
+- userId
+- anchorHabitId optional
+- anchorDescription
+- newHabitId
+- stackPhrase
+- createdAt
+- updatedAt
+
+JournalEntry:
+- id
+- userId
+- date
+- content
+- mood optional
+- tags as array or relation
+- createdAt
+- updatedAt
+
+AIMemory:
+- id
+- userId
+- content
+- sourceType: JOURNAL, HABIT, USER_NOTE, AI_SUMMARY, REFLECTION
+- tags
+- importance
+- memoryDate
+- createdAt
+- updatedAt
+
+AIConversation:
+- id
+- userId
+- title
+- createdAt
+- updatedAt
+
+AIMessage:
+- id
+- conversationId
+- role: user, assistant, system, tool
+- content
+- createdAt
+
+AIProposedAction:
+- id
+- userId
+- conversationId
+- type: CREATE_HABIT, UPDATE_HABIT, CREATE_MEMORY, CREATE_IDENTITY
+- payload JSON
+- status: PENDING, CONFIRMED, REJECTED, EXECUTED
+- createdAt
+- updatedAt
+
+Optional Tag model if preferred:
+Tag:
+- id
+- userId
+- name
+- createdAt
+
+You may implement tags as PostgreSQL text arrays for MVP simplicity.
+
+AI assistant requirements:
+The AI assistant must use Ollama through an adapter service.
+Use POST /api/chat on the Ollama server.
+The default model should be qwen:0.6b via OLLAMA_MODEL.
+The assistant must be contextual and useful, but privacy-preserving because all data stays local or in the user’s own deployment.
+
+The AI assistant must be able to query the user’s stored data from PostgreSQL through backend-controlled tools. Do not allow the model to directly access the database. Implement server-side “skills” or “tools” as controlled functions:
+- searchHabitLogs
+- searchJournalEntries
+- getHabitConsistency
+- getIdentityEvidence
+- getRecentMemories
+- createProposedHabit
+- createProposedMemory
+- createProposedIdentity
+
+The assistant should be able to answer questions like:
+- “Why am I failing at meditation?”
+- “What habits am I most consistent with?”
+- “What identity did I reinforce most this week?”
+- “Summarize my last 7 days.”
+- “What tiny version should I use for my reading habit?”
+- “Create a habit for writing every morning.”
+- “What patterns do you see in my journal?”
+
+Important safety and control requirement:
+The AI assistant must not directly modify user data unless the user confirms. If the user asks the AI to create or change something, the assistant should propose an action and the UI should show a confirmation card:
+- Proposed action
+- Details
+- Confirm button
+- Reject button
+
+Only after confirmation should the backend execute the command. Use the Command pattern for these confirmed actions.
+
+AI memory requirements:
+The app must allow personal notes and memories to be stored with date and tags. Memories must be queryable by the AI assistant. The user should be able to manually create a memory, for example:
+- “I travel often on Mondays.”
+- “I prefer workouts in the afternoon.”
+- “Reading before sleep works better than reading after lunch.”
+- “I often fail habits when I sleep less than 6 hours.”
+
+Each memory must have:
+- date
+- tags
+- content
+- source type
+- importance
+
+The assistant should retrieve relevant memories by keyword/tag/date. For MVP, implement lexical search using PostgreSQL ILIKE or full-text search if easy. Do not require vector embeddings for MVP. However, structure the code so vector search could be added later.
+
+AI prompt behavior:
+Create a strong system prompt for the AI coach. The AI should:
+- be practical and concise
+- use the user’s habit data when available
+- avoid fake certainty
+- recommend tiny versions of habits
+- focus on identity evidence
+- encourage never missing twice
+- ask for confirmation before creating or editing data
+- produce sober, thoughtful coaching, not motivational fluff
+- avoid medical, legal, or financial advice beyond general habit coaching
+
+Example AI coach voice:
+“Your meditation habit failed three times this week, but your reading habit remained stable. The pattern seems to be that evening habits survive better than morning habits for you. A tiny version for meditation could be: after brushing your teeth, sit for one minute and take five slow breaths. Would you like me to create that as a recovery habit?”
+
+Frontend requirements:
+Use React + Vite + TypeScript.
+Use Tailwind CSS.
+Implement a polished dark UI.
+
+Main pages:
+1. Landing / Login / Register
+2. Main Dashboard
+3. Habits
+4. Identities
+5. Habit Stacking
+6. Journal
+7. AI Coach
+8. Insights
+9. Settings / Export
+
+Navigation:
+Use a left sidebar on desktop:
+- Today
+- Habits
+- Identities
+- Stacks
+- Journal
+- AI Coach
+- Insights
+- Export
+
+On mobile, use a responsive collapsible sidebar or top navigation. The app should be compatible with mobile screens, but it does not need to be designed mobile-first.
+
+Visual design direction:
+Use a dark GitHub-like aesthetic:
+- Background: near-black or deep graphite
+- Panels: dark gray with subtle borders
+- Text: soft white / gray scale
+- Accent: green inspired by GitHub contribution graph, but use it carefully and elegantly
+- Secondary accents: muted blue, violet, amber only where useful
+- Border radius: modern rounded cards
+- Shadows: subtle, not heavy
+- Typography: clean sans-serif
+- Dense but readable dashboard layout
+- Avoid bright playful habit-app colors
+- Avoid childish gamification
+- Use microinteractions on hover and completion states
+
+Important UI components:
+- AppShell
+- Sidebar
+- TopBar
+- HabitCard
+- IdentityCard
+- TodayChecklist
+- HeatmapCalendar
+- JournalEditor
+- AIChatPanel
+- AIProposedActionCard
+- InsightCard
+- StreakBadge
+- ProgressRing or ProgressBar
+- EmptyState
+- LoadingSkeleton
+- ErrorMessage
+- ConfirmDialog
+- CSVExportPanel
+
+Dashboard page:
+The dashboard should be the emotional center of the app.
+
+Include:
+- Greeting: “Good evening, Pablo” or generic user name from account.
+- Today’s date.
+- Daily completion summary: “4 of 6 habits completed.”
+- Identity evidence summary: “Today you reinforced: Focused Builder, Healthy Person.”
+- Today habit checklist.
+- Never Miss Twice alert if there are habits missed yesterday and not yet completed today.
+- GitHub-style heatmap preview for current year or recent months.
+- A small “Coach reflection” card with AI-generated or rule-based prompt.
+- Recent journal snippet.
+- Basic insights.
+
+Habit card:
+Each habit card should show:
+- habit name
+- associated identity
+- frequency
+- today status
+- streak
+- minimum version
+- ideal version
+- cue
+- quick complete button
+- optional note input
+
+Habit creation form:
+Fields:
+- name
+- identity
+- type
+- frequency
+- target value and unit
+- minimum version
+- ideal version
+- cue type
+- cue description
+- reward
+- environment design notes
+- friction notes
+
+Add helpful UX copy:
+- Minimum version example: “Read 1 page.”
+- Ideal version example: “Read 20 pages.”
+- Cue example: “After making coffee.”
+- Environment design example: “Keep the book on the nightstand.”
+
+Identity page:
+The identity page should show identity cards. Each card should include:
+- name
+- description
+- number of linked habits
+- total evidence count
+- recent evidence
+- consistency score
+- edit/delete actions
+
+Identity card examples:
+- “Focused Builder”
+- “Healthy Person”
+- “Consistent Reader”
+- “Calm Thinker”
+
+Habit stacking page:
+Allow the user to define stacks:
+“After [anchor], I will [habit].”
+
+Examples:
+- “After I make coffee, I will write 100 words.”
+- “After I brush my teeth, I will meditate for 1 minute.”
+- “After I close my laptop, I will plan tomorrow.”
+
+Represent stacks visually as connected cards or a vertical flow. Keep the style elegant and minimal.
+
+Heatmap calendar:
+Build a GitHub-style habit heatmap.
+Requirements:
+- Show days as small squares.
+- Intensity based on daily completion percentage or number of completed habits.
+- Tooltip on hover showing date and completion summary.
+- Legend for intensity.
+- Year selector if simple.
+- Works in dark mode.
+- Use accessible labels.
+
+Do not rely on an external chart library unless useful. A custom React component is acceptable.
+
+Journal page:
+The journal should help users reflect:
+Fields:
+- date
+- content
+- mood optional
+- tags
+- prompts
+
+Suggested prompts:
+- What worked today?
+- What blocked me?
+- What tiny improvement will I make tomorrow?
+- What identity did I reinforce today?
+- Where did friction show up?
+
+Journal entries should be searchable. The AI should be able to retrieve journal entries.
+
+AI Coach page:
+Create a chat interface:
+- Left or main chat panel
+- Message bubbles
+- Suggested prompts
+- Context chips such as “Last 7 days”, “Reading”, “Missed habits”, “Journal”
+- Confirmation cards for proposed actions
+
+Suggested prompts:
+- “Analyze my week.”
+- “Help me recover a missed habit.”
+- “Find patterns in my journal.”
+- “Suggest a tiny version for my hardest habit.”
+- “Which identity am I reinforcing most?”
+- “Create a habit for becoming a better reader.”
+
+The AI must be clearly local/Ollama-based. Add a small status indicator:
+- “AI: Connected to Ollama”
+- “AI unavailable: check OLLAMA_BASE_URL and model”
+
+Insights page:
+Implement basic deterministic insights without requiring AI:
+- completion rate over last 7 days
+- completion rate over last 30 days
+- best habit
+- weakest habit
+- strongest identity
+- habits missed yesterday
+- never miss twice opportunities
+- most common journal tags
+
+If Ollama is available, optionally add an AI insight summary.
+
+Never Miss Twice:
+Implement logic:
+If a habit was missed yesterday and is not completed today, show a recovery card:
+“You missed this habit yesterday. Protect the streak of identity by doing the minimum version today.”
+Show:
+- habit name
+- minimum version
+- “Do minimum version now” button
+- “Skip consciously” option with note
+
+This feature should focus on getting back on track, not guilt.
+
+CSV export:
+Implement CSV exports:
+- habits
+- habit logs
+- journal
+- identities
+- all data as separate CSV files or a combined export route if simpler
+
+At minimum:
+GET /api/export/habits.csv
+GET /api/export/journal.csv
+GET /api/export/all.csv
+
+The export must require authentication and only export the current user’s data.
+
+Seed data:
+Create seed data for a demo user if appropriate, but do not make it insecure in production. Include sample identities:
+- Focused Builder
+- Healthy Person
+- Consistent Reader
+- Calm Thinker
+
+Sample habits:
+- Write 200 words
+- Read 10 pages
+- Meditate 5 minutes
+- Walk 30 minutes
+- Plan tomorrow
+
+Sample stacks:
+- After morning coffee, write 200 words.
+- After brushing teeth, meditate for 5 minutes.
+- After dinner, read 10 pages.
+
+Sample journal entries with tags:
+- focus
+- sleep
+- travel
+- reading
+- energy
+
+Authentication and security:
+- Hash passwords securely.
+- Never store plain passwords.
+- Protect all user data routes.
+- Ensure users can only access their own data.
+- Add basic rate limiting for auth endpoints if easy.
+- Use httpOnly cookies or Authorization bearer token. Choose the simpler robust implementation.
+- Validate request bodies.
+- Centralize error handling.
+- Do not leak stack traces in production.
+
+Testing:
+Add basic automated tests. Use a practical setup compatible with the chosen stack.
+Tests should cover:
+- auth registration/login happy path
+- protected route requires auth
+- creating a habit
+- logging habit completion
+- dashboard today calculation
+- AI proposed action does not execute until confirmed
+- CSV export requires auth
+
+If full integration tests are too heavy, implement service-level tests plus route tests for the most important flows.
+
+README:
+Create a detailed README in English with:
+- project overview
+- feature list
+- architecture
+- local setup without Docker
+- Docker setup
+- Docker Compose setup
+- using Ollama inside Docker Compose
+- using external Ollama
+- environment variables
+- pulling the Ollama model
+- database migrations
+- seeding
+- running tests
+- CSV export
+- Replit notes
+- troubleshooting
+
+Docker Compose expectations:
+Include PostgreSQL and Ollama services. Make the Ollama service optional or easy to disable. Include persistent volumes:
+- postgres_data
+- ollama_data
+
+Example behavior:
+docker compose up --build
+Then app available at localhost.
+Postgres persists data.
+Ollama persists models.
+
+Add a note that users may need to run:
+docker compose exec ollama ollama pull qwen:0.6b
+or another model configured in OLLAMA_MODEL.
+
+If qwen:0.6b is not a valid exact Ollama tag at runtime, the app must still work when OLLAMA_MODEL is changed. Do not hard-code model assumptions.
+
+Implementation details:
+Frontend should call backend APIs through a typed API client.
+Use React Query or simple custom hooks. React Query is preferred if easy.
+Use form validation.
+Use optimistic UI only where safe.
+Show loading and error states.
+
+Date handling:
+Use local dates carefully. Habit tracking is date-based. Avoid timezone bugs by storing date-only values where possible. Use ISO date strings for API calls.
+
+Accessibility:
+- Use semantic HTML.
+- Keyboard accessible forms and buttons.
+- Good contrast in dark mode.
+- Tooltips should not be the only way to access information.
+
+Performance:
+The app is MVP, but avoid obviously inefficient queries. Index userId/date fields. The heatmap should fetch aggregated data, not all raw logs if avoidable.
+
+Deliverables:
+Generate the complete codebase:
+- working frontend
+- working backend
+- Prisma schema
+- Dockerfile
+- docker-compose.yml
+- .env.example
+- README
+- basic tests
+- seed script if useful
+
+Do not stop after generating a plan. Implement the app. If you need to make assumptions, make reasonable ones and document them in the README.
+
+Detailed UX copy:
+Landing page headline:
+“Build the identity behind your habits.”
+
+Subheadline:
+“Track daily evidence, design better systems, and use a local AI coach to understand what actually helps you stay consistent.”
+
+Primary CTA:
+“Create your account”
+
+Secondary CTA:
+“Sign in”
+
+Dashboard empty state:
+“No habits yet. Start with one tiny action that proves who you want to become.”
+
+Habit empty state:
+“Create your first habit. Make it small enough that you can do it even on a bad day.”
+
+AI unavailable message:
+“Ollama is not reachable right now. Check your OLLAMA_BASE_URL, confirm the model is installed, and try again.”
+
+Never Miss Twice message:
+“You missed this yesterday. No guilt. Do the minimum version today and keep the identity alive.”
+
+Visual polish:
+Use cards with subtle borders.
+Use soft green contribution squares.
+Use small labels and metadata text.
+Use beautiful empty states.
+Use consistent spacing.
+Use subtle hover states.
+Use clear hierarchy.
+Avoid clutter.
+
+AI technical behavior:
+The backend should construct the AI context from:
+- the current authenticated user
+- recent habit logs
+- relevant identities
+- recent journal entries
+- relevant memories
+- any user-selected context chips
+
+Do not send the entire database every time. Fetch a concise context window, such as:
+- last 14 days of habit summaries
+- active habits
+- identities
+- top relevant memories
+- recent journal entries if relevant
+
+For tool-like behavior:
+Since Ollama’s tool support may vary by model, implement a robust fallback:
+- The backend can parse structured JSON proposals from the assistant.
+- Or the backend can create proposed actions directly when the user request clearly asks for creation.
+- Always show proposed actions to the user for confirmation before writing data.
+
+Example proposed action JSON:
+{
+  "type": "CREATE_HABIT",
+  "payload": {
+    "name": "Meditate for 1 minute",
+    "minimumVersion": "Sit and take five slow breaths",
+    "idealVersion": "Meditate for 5 minutes",
+    "cueDescription": "After brushing my teeth",
+    "identityName": "Calm Thinker"
+  }
+}
+
+The UI should display this as a clean confirmation card.
+
+Backend AI adapter:
+Create an OllamaClient class with:
+- constructor(baseUrl, model)
+- chat(messages, options)
+- healthCheck()
+
+This isolates Ollama-specific logic.
+
+CSV implementation:
+Use a simple CSV generator. Escape commas and quotes correctly. Include headers.
+
+Error handling:
+Create a consistent API response shape:
+Success:
+{
+  "data": ...
+}
+
+Error:
+{
+  "error": {
+    "message": "...",
+    "code": "..."
+  }
+}
+
+Important product nuance:
+Do not shame users for missing habits. Use language of recovery and systems. The app should feel like a calm personal operating system for behavior change.
+
+Final acceptance criteria:
+- A new user can register.
+- A user can log in.
+- A user can create identities.
+- A user can create habits linked to identities.
+- A user can complete habits for today.
+- The dashboard updates completion counts.
+- The heatmap shows activity.
+- The journal can save entries with tags.
+- The AI coach can chat through Ollama.
+- If Ollama is unavailable, the app does not crash.
+- The AI can propose a habit, but the habit is not created until the user confirms.
+- The user can export CSV.
+- The app runs with Docker Compose.
+- The README explains local, Docker, Ollama, and Replit usage.
+- The UI is visually polished and coherent in a dark GitHub-inspired style.
+
+Build the app now.
+```
+
+[1]: https://docs.ollama.com/api/chat?utm_source=chatgpt.com "Generate a chat message"

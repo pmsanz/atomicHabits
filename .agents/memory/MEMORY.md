@@ -1,0 +1,1 @@
+- [Atomic Identity Habits architecture](atomic-habits-arch.md) — full-stack habit app; JWT auth via SESSION_SECRET, Ollama AI coach, contract-first OpenAPI

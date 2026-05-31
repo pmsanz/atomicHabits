@@ -3,20 +3,38 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Atomic Identity Habits API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: identities
+    description: Identity management
+  - name: habits
+    description: Habit management
+  - name: habitLogs
+    description: Habit completion logs
+  - name: habitStacks
+    description: Habit stacking
+  - name: journal
+    description: Daily journal entries
+  - name: dashboard
+    description: Dashboard aggregations
+  - name: ai
+    description: AI coach operations
+  - name: export
+    description: CSV data export
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +42,1493 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── AUTH ───────────────────────────────────────────────────────────────────
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  # ─── IDENTITIES ─────────────────────────────────────────────────────────────
+
+  /identities:
+    get:
+      operationId: listIdentities
+      tags: [identities]
+      summary: List all identities
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Identity"
+    post:
+      operationId: createIdentity
+      tags: [identities]
+      summary: Create an identity
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentityInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Identity"
+
+  /identities/{id}:
+    patch:
+      operationId: updateIdentity
+      tags: [identities]
+      summary: Update an identity
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentityUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Identity"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteIdentity
+      tags: [identities]
+      summary: Delete an identity
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── HABITS ─────────────────────────────────────────────────────────────────
+
+  /habits:
+    get:
+      operationId: listHabits
+      tags: [habits]
+      summary: List all habits
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Habit"
+    post:
+      operationId: createHabit
+      tags: [habits]
+      summary: Create a habit
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Habit"
+
+  /habits/{id}:
+    get:
+      operationId: getHabit
+      tags: [habits]
+      summary: Get a single habit
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Habit"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateHabit
+      tags: [habits]
+      summary: Update a habit
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Habit"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteHabit
+      tags: [habits]
+      summary: Delete a habit
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── HABIT LOGS ─────────────────────────────────────────────────────────────
+
+  /habit-logs:
+    get:
+      operationId: listHabitLogs
+      tags: [habitLogs]
+      summary: List habit logs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
+        - name: habitId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HabitLog"
+    post:
+      operationId: createHabitLog
+      tags: [habitLogs]
+      summary: Log a habit completion
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitLogInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HabitLog"
+
+  /habit-logs/{id}:
+    patch:
+      operationId: updateHabitLog
+      tags: [habitLogs]
+      summary: Update a habit log
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitLogUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HabitLog"
+    delete:
+      operationId: deleteHabitLog
+      tags: [habitLogs]
+      summary: Delete a habit log
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── HABIT STACKS ────────────────────────────────────────────────────────────
+
+  /habit-stacks:
+    get:
+      operationId: listHabitStacks
+      tags: [habitStacks]
+      summary: List habit stacks
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HabitStack"
+    post:
+      operationId: createHabitStack
+      tags: [habitStacks]
+      summary: Create a habit stack
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitStackInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HabitStack"
+
+  /habit-stacks/{id}:
+    patch:
+      operationId: updateHabitStack
+      tags: [habitStacks]
+      summary: Update a habit stack
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitStackUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HabitStack"
+    delete:
+      operationId: deleteHabitStack
+      tags: [habitStacks]
+      summary: Delete a habit stack
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── JOURNAL ─────────────────────────────────────────────────────────────────
+
+  /journal:
+    get:
+      operationId: listJournalEntries
+      tags: [journal]
+      summary: List journal entries
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JournalEntry"
+    post:
+      operationId: createJournalEntry
+      tags: [journal]
+      summary: Create or update a journal entry
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JournalEntryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+
+  /journal/search:
+    get:
+      operationId: searchJournalEntries
+      tags: [journal]
+      summary: Search journal entries
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JournalEntry"
+
+  /journal/{id}:
+    patch:
+      operationId: updateJournalEntry
+      tags: [journal]
+      summary: Update a journal entry
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JournalEntryUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+    delete:
+      operationId: deleteJournalEntry
+      tags: [journal]
+      summary: Delete a journal entry
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── DASHBOARD ───────────────────────────────────────────────────────────────
+
+  /dashboard/today:
+    get:
+      operationId: getDashboardToday
+      tags: [dashboard]
+      summary: Get today's dashboard summary
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardToday"
+
+  /dashboard/heatmap:
+    get:
+      operationId: getDashboardHeatmap
+      tags: [dashboard]
+      summary: Get heatmap data for a year
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HeatmapDay"
+
+  /dashboard/insights:
+    get:
+      operationId: getDashboardInsights
+      tags: [dashboard]
+      summary: Get insights and analytics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Insights"
+
+  # ─── AI ──────────────────────────────────────────────────────────────────────
+
+  /ai/status:
+    get:
+      operationId: getAiStatus
+      tags: [ai]
+      summary: Check AI / Ollama availability
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiStatus"
+
+  /ai/chat:
+    post:
+      operationId: aiChat
+      tags: [ai]
+      summary: Send a chat message to the AI coach
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatReply"
+
+  /ai/confirm-action:
+    post:
+      operationId: confirmAiAction
+      tags: [ai]
+      summary: Confirm or reject an AI proposed action
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiActionConfirmInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiActionResult"
+
+  /ai/memories:
+    get:
+      operationId: listAiMemories
+      tags: [ai]
+      summary: List AI memories
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiMemory"
+    post:
+      operationId: createAiMemory
+      tags: [ai]
+      summary: Create an AI memory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiMemoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiMemory"
+
+  /ai/memories/{id}:
+    delete:
+      operationId: deleteAiMemory
+      tags: [ai]
+      summary: Delete an AI memory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /ai/conversations:
+    get:
+      operationId: listAiConversations
+      tags: [ai]
+      summary: List AI conversations
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiConversation"
+    post:
+      operationId: createAiConversation
+      tags: [ai]
+      summary: Create a new AI conversation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiConversationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiConversation"
+
+  /ai/conversations/{id}/messages:
+    get:
+      operationId: listAiMessages
+      tags: [ai]
+      summary: List messages in a conversation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiMessage"
+
+  # ─── EXPORT ──────────────────────────────────────────────────────────────────
+
+  /export/habits.csv:
+    get:
+      operationId: exportHabitsCsv
+      tags: [export]
+      summary: Export habits as CSV
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /export/journal.csv:
+    get:
+      operationId: exportJournalCsv
+      tags: [export]
+      summary: Export journal as CSV
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /export/all.csv:
+    get:
+      operationId: exportAllCsv
+      tags: [export]
+      summary: Export all data as CSV (zip)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    # ─── AUTH ───────────────────────────────────────────────────────────────
+
+    RegisterInput:
+      type: object
+      required: [email, password, name]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      required: [id, email, name, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: string
+
+    # ─── IDENTITY ────────────────────────────────────────────────────────────
+
+    Identity:
+      type: object
+      required: [id, userId, name, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        colorKey:
+          type: ["string", "null"]
+        habitCount:
+          type: integer
+        evidenceCount:
+          type: integer
+        consistencyScore:
+          type: ["number", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    IdentityInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        colorKey:
+          type: string
+
+    IdentityUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        colorKey:
+          type: string
+
+    # ─── HABIT ───────────────────────────────────────────────────────────────
+
+    Habit:
+      type: object
+      required: [id, userId, name, habitType, frequency, isActive, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        identityId:
+          type: ["integer", "null"]
+        identityName:
+          type: ["string", "null"]
+        identityColorKey:
+          type: ["string", "null"]
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        habitType:
+          type: string
+          enum: [BOOLEAN, QUANTITY, DURATION]
+        frequency:
+          type: string
+          enum: [DAILY, WEEKLY, CUSTOM]
+        targetValue:
+          type: ["number", "null"]
+        targetUnit:
+          type: ["string", "null"]
+        minimumVersion:
+          type: ["string", "null"]
+        idealVersion:
+          type: ["string", "null"]
+        cueType:
+          type: ["string", "null"]
+          enum: [TIME, LOCATION, EVENT, PERSON, NONE, null]
+        cueDescription:
+          type: ["string", "null"]
+        rewardDescription:
+          type: ["string", "null"]
+        frictionNotes:
+          type: ["string", "null"]
+        environmentDesignNotes:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        streak:
+          type: integer
+        todayCompleted:
+          type: boolean
+        todayLogId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    HabitInput:
+      type: object
+      required: [name, habitType, frequency]
+      properties:
+        name:
+          type: string
+        identityId:
+          type: integer
+        description:
+          type: string
+        habitType:
+          type: string
+          enum: [BOOLEAN, QUANTITY, DURATION]
+        frequency:
+          type: string
+          enum: [DAILY, WEEKLY, CUSTOM]
+        targetValue:
+          type: number
+        targetUnit:
+          type: string
+        minimumVersion:
+          type: string
+        idealVersion:
+          type: string
+        cueType:
+          type: string
+          enum: [TIME, LOCATION, EVENT, PERSON, NONE]
+        cueDescription:
+          type: string
+        rewardDescription:
+          type: string
+        frictionNotes:
+          type: string
+        environmentDesignNotes:
+          type: string
+
+    HabitUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        identityId:
+          type: ["integer", "null"]
+        description:
+          type: string
+        habitType:
+          type: string
+          enum: [BOOLEAN, QUANTITY, DURATION]
+        frequency:
+          type: string
+          enum: [DAILY, WEEKLY, CUSTOM]
+        targetValue:
+          type: number
+        targetUnit:
+          type: string
+        minimumVersion:
+          type: string
+        idealVersion:
+          type: string
+        cueType:
+          type: string
+          enum: [TIME, LOCATION, EVENT, PERSON, NONE]
+        cueDescription:
+          type: string
+        rewardDescription:
+          type: string
+        frictionNotes:
+          type: string
+        environmentDesignNotes:
+          type: string
+        isActive:
+          type: boolean
+
+    # ─── HABIT LOG ────────────────────────────────────────────────────────────
+
+    HabitLog:
+      type: object
+      required: [id, userId, habitId, date, completed, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        habitId:
+          type: integer
+        habitName:
+          type: ["string", "null"]
+        date:
+          type: string
+        value:
+          type: ["number", "null"]
+        completed:
+          type: boolean
+        note:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    HabitLogInput:
+      type: object
+      required: [habitId, date]
+      properties:
+        habitId:
+          type: integer
+        date:
+          type: string
+        value:
+          type: number
+        completed:
+          type: boolean
+        note:
+          type: string
+
+    HabitLogUpdate:
+      type: object
+      properties:
+        value:
+          type: number
+        completed:
+          type: boolean
+        note:
+          type: string
+
+    # ─── HABIT STACK ─────────────────────────────────────────────────────────
+
+    HabitStack:
+      type: object
+      required: [id, userId, newHabitId, anchorDescription, stackPhrase, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        anchorHabitId:
+          type: ["integer", "null"]
+        anchorHabitName:
+          type: ["string", "null"]
+        anchorDescription:
+          type: string
+        newHabitId:
+          type: integer
+        newHabitName:
+          type: ["string", "null"]
+        stackPhrase:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    HabitStackInput:
+      type: object
+      required: [newHabitId, anchorDescription, stackPhrase]
+      properties:
+        anchorHabitId:
+          type: integer
+        anchorDescription:
+          type: string
+        newHabitId:
+          type: integer
+        stackPhrase:
+          type: string
+
+    HabitStackUpdate:
+      type: object
+      properties:
+        anchorHabitId:
+          type: integer
+        anchorDescription:
+          type: string
+        newHabitId:
+          type: integer
+        stackPhrase:
+          type: string
+
+    # ─── JOURNAL ─────────────────────────────────────────────────────────────
+
+    JournalEntry:
+      type: object
+      required: [id, userId, date, content, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        date:
+          type: string
+        content:
+          type: string
+        mood:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    JournalEntryInput:
+      type: object
+      required: [date, content]
+      properties:
+        date:
+          type: string
+        content:
+          type: string
+        mood:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    JournalEntryUpdate:
+      type: object
+      properties:
+        content:
+          type: string
+        mood:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    # ─── DASHBOARD ───────────────────────────────────────────────────────────
+
+    DashboardToday:
+      type: object
+      required: [date, totalHabits, completedHabits, habits, identityEvidence, neverMissTwice, recentJournal]
+      properties:
+        date:
+          type: string
+        totalHabits:
+          type: integer
+        completedHabits:
+          type: integer
+        completionRate:
+          type: number
+        habits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Habit"
+        identityEvidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/IdentityEvidence"
+        neverMissTwice:
+          type: array
+          items:
+            $ref: "#/components/schemas/NeverMissTwiceItem"
+        recentJournal:
+          type: ["object", "null"]
+          properties:
+            id:
+              type: integer
+            date:
+              type: string
+            content:
+              type: string
+            mood:
+              type: ["string", "null"]
+            tags:
+              type: array
+              items:
+                type: string
+
+    IdentityEvidence:
+      type: object
+      required: [identityId, identityName, count]
+      properties:
+        identityId:
+          type: integer
+        identityName:
+          type: string
+        colorKey:
+          type: ["string", "null"]
+        count:
+          type: integer
+
+    NeverMissTwiceItem:
+      type: object
+      required: [habitId, habitName]
+      properties:
+        habitId:
+          type: integer
+        habitName:
+          type: string
+        minimumVersion:
+          type: ["string", "null"]
+        identityName:
+          type: ["string", "null"]
+
+    HeatmapDay:
+      type: object
+      required: [date, count, total, rate]
+      properties:
+        date:
+          type: string
+        count:
+          type: integer
+        total:
+          type: integer
+        rate:
+          type: number
+
+    Insights:
+      type: object
+      required: [last7Days, last30Days, bestHabit, weakestHabit, strongestIdentity, missedYesterday, topJournalTags]
+      properties:
+        last7Days:
+          type: number
+        last30Days:
+          type: number
+        bestHabit:
+          type: ["object", "null"]
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            streak:
+              type: integer
+            rate:
+              type: number
+        weakestHabit:
+          type: ["object", "null"]
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            streak:
+              type: integer
+            rate:
+              type: number
+        strongestIdentity:
+          type: ["object", "null"]
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            evidenceCount:
+              type: integer
+            consistencyScore:
+              type: number
+        missedYesterday:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              minimumVersion:
+                type: ["string", "null"]
+        topJournalTags:
+          type: array
+          items:
+            type: object
+            properties:
+              tag:
+                type: string
+              count:
+                type: integer
+
+    # ─── AI ──────────────────────────────────────────────────────────────────
+
+    AiStatus:
+      type: object
+      required: [available, model]
+      properties:
+        available:
+          type: boolean
+        model:
+          type: string
+        message:
+          type: ["string", "null"]
+
+    ChatMessageInput:
+      type: object
+      required: [message]
+      properties:
+        conversationId:
+          type: ["integer", "null"]
+        message:
+          type: string
+        contextChips:
+          type: array
+          items:
+            type: string
+
+    ChatReply:
+      type: object
+      required: [message, conversationId]
+      properties:
+        message:
+          type: string
+        conversationId:
+          type: integer
+        proposedAction:
+          type: ["object", "null"]
+          properties:
+            type:
+              type: string
+            payload:
+              type: object
+
+    AiActionConfirmInput:
+      type: object
+      required: [proposedActionType, payload, confirmed]
+      properties:
+        proposedActionType:
+          type: string
+        payload:
+          type: object
+        confirmed:
+          type: boolean
+
+    AiActionResult:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: ["object", "null"]
+
+    AiMemory:
+      type: object
+      required: [id, userId, content, sourceType, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        content:
+          type: string
+        sourceType:
+          type: string
+          enum: [JOURNAL, HABIT, USER_NOTE, AI_SUMMARY, REFLECTION]
+        tags:
+          type: array
+          items:
+            type: string
+        importance:
+          type: ["integer", "null"]
+        memoryDate:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AiMemoryInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        sourceType:
+          type: string
+          enum: [JOURNAL, HABIT, USER_NOTE, AI_SUMMARY, REFLECTION]
+        tags:
+          type: array
+          items:
+            type: string
+        importance:
+          type: integer
+        memoryDate:
+          type: string
+
+    AiConversation:
+      type: object
+      required: [id, userId, title, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    AiConversationInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+
+    AiMessage:
+      type: object
+      required: [id, conversationId, role, content, createdAt]
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant, system]
+        content:
+          type: string
+        createdAt:
+          type: string
